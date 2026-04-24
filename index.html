@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>3D Museum</title>
+
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    #magnifierButton {
+      display: none;
+      position: fixed;
+      right: 80px;
+      top: 50%;
+      transform: translateY(-50%);
+
+      z-index: 15;
+      width: 64px;
+      height: 64px;
+
+      border: 2px solid white;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.35);
+      color: white;
+
+      font-size: 32px;
+      cursor: pointer;
+    }
+
+    #artInfo {
+      display: none;
+
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      width: 60%;
+      max-width: 900px;
+      min-height: 230px;
+
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(10px);
+
+      color: #ffffff;
+      z-index: 20;
+
+      border-radius: 18px;
+      padding: 40px 55px;
+      box-sizing: border-box;
+    }
+
+    #artTitle {
+      margin: 0 0 22px 0;
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    #artText {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.9;
+      white-space: pre-line;
+      font-weight: 500;
+    }
+
+    #closeInfo {
+      position: absolute;
+      top: 20px;
+      right: 26px;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+    }
+  </style>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <button id="magnifierButton">🔍</button>
+
+  <div id="artInfo">
+    <button id="closeInfo">×</button>
+    <h2 id="artTitle"></h2>
+    <p id="artText"></p>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>
