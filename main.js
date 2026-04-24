@@ -50,6 +50,7 @@ const defaultTarget = controls.target.clone();
 
 // 管理用
 const warpPoints = [];
+const artClickObjects = [];
 const clock = new THREE.Clock();
 
 let currentArtKey = null;
@@ -82,16 +83,6 @@ const artData = {
   }
 };
 
-// ワープポイントと作品の対応
-const warpArtMap = {
-  warp1: "click01",
-  warp2: "click02",
-  warp3: "click03",
-  warp4: "click04",
-  warp5: "click05",
-  warp6: "click06"
-};
-
 // GLB読み込み
 const loader = new GLTFLoader();
 
@@ -101,6 +92,7 @@ loader.load(
     scene.add(gltf.scene);
 
     gltf.scene.traverse(function (obj) {
+      // ワープポイント
       if (obj.name.startsWith('warp')) {
         warpPoints.push(obj);
 
@@ -113,7 +105,15 @@ loader.load(
           obj.scale.z * 0.45
         );
 
-        console.log('ワープポイント登録:', obj.name);
+        console.log('ワープ登録:', obj.name);
+      }
+
+      // 作品クリック用透明Plane
+      if (obj.name.startsWith('click')) {
+        artClickObjects.push(obj);
+        obj.userData.clickName = obj.name;
+
+        console.log('作品クリック登録:', obj.name);
       }
     });
 
@@ -137,6 +137,26 @@ window.addEventListener('click', function (event) {
 
   raycaster.setFromCamera(mouse, camera);
 
+  // 作品クリック判定
+  const artHits = raycaster.intersectObjects(artClickObjects, true);
+
+  if (artHits.length > 0) {
+    const clicked = artHits[0].object;
+    const clickName = clicked.userData.clickName || clicked.name;
+
+    console.log('作品クリック:', clickName);
+
+    currentArtKey = clickName;
+
+    moveToObject(clicked);
+    showMagnifier();
+
+    document.getElementById('artInfo').style.display = 'none';
+
+    return;
+  }
+
+  // ワープポイント判定
   const warpHits = raycaster.intersectObjects(warpPoints, true);
 
   if (warpHits.length > 0) {
@@ -147,6 +167,11 @@ window.addEventListener('click', function (event) {
     }
 
     moveToWarp(clicked);
+
+    // ワープ時は虫眼鏡・説明を消す
+    currentArtKey = null;
+    document.getElementById('magnifierButton').style.display = 'none';
+    document.getElementById('artInfo').style.display = 'none';
   }
 });
 
@@ -170,33 +195,53 @@ function moveToWarp(warpObj) {
   limitCameraPosition();
   controls.update();
 
-  currentArtKey = warpArtMap[warpObj.name] || null;
-
-  const magnifierButton = document.getElementById('magnifierButton');
-
-  if (currentArtKey) {
-    magnifierButton.style.display = 'block';
-  } else {
-    magnifierButton.style.display = 'none';
-  }
-
-  document.getElementById('artInfo').style.display = 'none';
-
-  console.log(warpObj.name + ' にワープしました / 対応作品:', currentArtKey);
+  console.log(warpObj.name + ' にワープしました');
 }
 
-// 虫眼鏡クリックで説明表示
+// 作品の前へ移動
+function moveToObject(obj) {
+  const pos = new THREE.Vector3();
+  obj.getWorldPosition(pos);
+
+  camera.position.set(
+    pos.x,
+    pos.y + 6,
+    pos.z + 28
+  );
+
+  controls.target.set(
+    pos.x,
+    pos.y,
+    pos.z
+  );
+
+  limitCameraPosition();
+  controls.update();
+}
+
+// 虫眼鏡表示
+function showMagnifier() {
+  const magnifierButton = document.getElementById('magnifierButton');
+  magnifierButton.style.display = 'block';
+}
+
+// 虫眼鏡クリック
 const magnifierButton = document.getElementById('magnifierButton');
 
 magnifierButton.addEventListener('click', function () {
   if (!currentArtKey) return;
+
   showArtInfo(currentArtKey);
 });
 
 // 作品情報表示
 function showArtInfo(clickName) {
   const data = artData[clickName];
-  if (!data) return;
+
+  if (!data) {
+    console.log('作品データなし:', clickName);
+    return;
+  }
 
   document.getElementById('artTitle').innerText = data.title;
   document.getElementById('artText').innerText = data.text;
@@ -243,7 +288,7 @@ function animate() {
 
 animate();
 
-// リサイズ対応
+// 画面サイズ変更対応
 window.addEventListener('resize', function () {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
